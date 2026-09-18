@@ -1042,6 +1042,7 @@ class DateTimeSpinnerCard extends LitElement {
     let prevActiveIdx = initialIdx;
     let lastHapticIdx = initialIdx;
     const abortController = new AbortController();
+    this._attachWheelStep(container, abortController.signal);   // NEU
     container._abortController = abortController;
     
     container.addEventListener("scroll", () => {
@@ -1128,6 +1129,7 @@ class DateTimeSpinnerCard extends LitElement {
     let prevActiveIdx = -1;
     let lastHapticIdx = -1;
     const abortController = new AbortController();
+    this._attachWheelStep(container, abortController.signal);   // NEU
     container._abortController = abortController;
     
     container.addEventListener("scroll", () => {
@@ -1163,6 +1165,20 @@ class DateTimeSpinnerCard extends LitElement {
     }, { signal: abortController.signal, passive: true });
   }
 
+  
+// Normalisiert Mausrad-Ticks auf exakt einen Item-Schritt,
+// da native Scroll-Deltas (100-120px) nicht zu itemHeight (48px) passen
+// und snap() sonst per Math.round() zwei Items überspringt.
+_attachWheelStep(container, signal) {
+  container.addEventListener("wheel", (e) => {
+    e.preventDefault();
+    const dir = Math.sign(e.deltaY);
+    if (dir !== 0) {
+      container.scrollBy({ top: dir * this.itemHeight, behavior: "smooth" });
+    }
+  }, { signal, passive: false });
+}
+  
   buildWheel(container, count, onChange, isMinutes = false, startValue = 0) {
     // Cleanup old event listener and timeout before rebuilding
     if (container._abortController) {
@@ -1206,6 +1222,7 @@ class DateTimeSpinnerCard extends LitElement {
 
     const abortController = new AbortController();
     container._abortController = abortController;
+    this._attachWheelStep(container, abortController.signal);   // NEU
     let lastSnapIdx = -1;
     let lastHapticIdx = -1;
     
